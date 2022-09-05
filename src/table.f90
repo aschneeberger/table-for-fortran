@@ -22,8 +22,9 @@ module TABLE
 
         contains 
         ! Procedure that modify or read the table  
-        procedure :: get_column                     ! Return the array corresponding the provided column name
-        procedure :: add_column                     ! Add a column to the table
+        procedure , public :: get_column                     ! Return the array corresponding the provided column name
+        procedure , public :: add_column                     ! Add a column to the table
+        procedure , public :: write_csv                      ! Write the table in a CSV file
 
     end type 
 
@@ -76,7 +77,7 @@ module TABLE
         
     end function 
 
-    subroutine write_file(me,path,fname)
+    subroutine write_csv(me,path,fname)
         ! Subroutine parsing, formating and writing datas in a file
         !-----
         !INPUT
@@ -101,9 +102,9 @@ module TABLE
         open(unit=300,file=Trim(path)//'/'//Trim(fname),status='new')
 
         ! Write the columns names
-        103 format((A),",")
+        103 format(*(A,","))
         
-        write(300,103) (me%header(i) , j=1,me%n_cols)
+        write(300,103) (trim(me%header(j)) , j=1,me%n_cols)
         
         ! Format and write values
         101 format(*(E24.17e3, ","))
