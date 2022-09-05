@@ -2,29 +2,28 @@
 !! @mail : antoine.schneeberger@protonmail.com
 
 
-Module TABLE 
+module TABLE 
     ! Module made for working environment management 
     ! It containes all path variables and will aim 
     ! to contains parallelisation status. 
-    ! it will work like a classe, wich is sketchy.
-    ! All public variables must begin by env_ 
+    ! it will work like a classe. As I don't like it, 
+    ! and produces more error pronne program at runtime,
+    ! i try to reduce the class implementation to the minimum
 
-    USE MODCTE
 
     implicit none 
 
-    CHARACTER (len=:), protected ,allocatable ::  env_datapath 
-
-    ! Table type, containing all its caracteristics
+    ! Table type, table caracteristics
     type data_table
-        integer :: n_rows 
-        integer :: n_cols 
-        character(len=50), dimension(:), allocatable :: header 
-        double precision, dimension(:,:), allocatable :: table
+        integer :: n_rows                                           ! Number of rows in the table 
+        integer :: n_cols                                           ! Number of columns 
+        character(len=50), dimension(:), allocatable :: header      ! Header, column names 
+        double precision, dimension(:,:), allocatable :: table      ! The table itself under the form of a matrix 
 
         contains 
-        procedure :: get_column
-        procedure :: add_column
+        ! Procedure that modify or read the table  
+        procedure :: get_column                     ! Return the array corresponding the provided column name
+        procedure :: add_column                     ! Add a column to the table
 
     end type 
 
@@ -77,13 +76,14 @@ Module TABLE
         
     end function 
 
-    subroutine write_file(fname, values, N_rows, N_cols, colnames)
+    subroutine write_file(path,fname, values, N_rows, N_cols, colnames)
         ! Subroutine parsing, formating and writing datas in a file
         !-----
         !INPUT
         !-----
         !
         ! fname : character : name of the  file 
+        ! path : character : path to the file 
         ! values  : double precision : data to write 
         ! N_rows : integer : number of rows  
         ! N_cols : integer : number of columns
@@ -91,6 +91,7 @@ Module TABLE
 
         !IN/OUT
         character(len=*),intent(in) :: fname ! file name 
+        character(len=*),intent(in) :: path ! file name 
         character(len=*),intent(in) :: colnames ! columns names 
 
         integer,intent(in) :: N_rows, N_cols 
@@ -105,7 +106,7 @@ Module TABLE
         ! Check if Number of values is coherent with the asked numbers of rows and cols 
         if (N_rows * N_cols .ne. size(values)) then 
 
-            WRITE(*,*) "[ENV] ERROR In write_file subroutine, values array size not equal to N_rows * N_cols"
+            WRITE(*,*) "[TABLE] ERROR In write_file subroutine, values array size not equal to N_rows * N_cols"
             WRITE(*,*) "File :", fname
             WRITE(*,*) "Header :", colnames
             WRITE(*,*) "array length :" , size(values)
@@ -118,7 +119,7 @@ Module TABLE
 
 
         ! Create the file 
-        open(unit=300,file=Trim(env_datapath)//'/'//Trim(fname),status='new')
+        open(unit=300,file=Trim(path)//'/'//Trim(fname),status='new')
 
         ! Write the columns names 
         write(300,'(A)') colnames
@@ -137,7 +138,7 @@ Module TABLE
         
     end subroutine 
 
-    subroutine read_csv(fname, table)
+    subroutine read_csv(path,fname, table)
         ! Subroutine reading csv files and parsing them into an array of colnames 
         ! and matrix of values. 
         !
@@ -146,6 +147,7 @@ Module TABLE
         !-------
         !
         ! fname : character : Name of the file 
+        ! path : character : path to the file 
         ! 
         !-------
         ! OUTPUT
@@ -158,6 +160,7 @@ Module TABLE
         !IN/OUT
 
         character(len=*), intent(in) :: fname
+        character(len=*), intent(in) :: path
         
         type(data_table), intent(inout) :: table
 
@@ -170,10 +173,10 @@ Module TABLE
         integer :: j,k                                                                  ! Iterators 
 
         ! Get the number of rows (-1 for the header)
-        table%n_rows = get_number_of_lines(fname) - 1
+        table%n_rows = get_number_of_lines(path,fname) - 1
 
         ! Open the file 
-        open(unit=300,file=Trim(env_datapath)//'/'//Trim(fname),status='old')     ! Open the file
+        open(unit=300,file=Trim(path)//'/'//Trim(fname),status='old')     ! Open the file
 
         ! The first line is an array of colnames        
         
@@ -208,14 +211,15 @@ Module TABLE
     end subroutine 
 
 
-    function get_number_of_lines(fname)
+    function get_number_of_lines(path,fname)
         ! Get the number of line of a file
         !
         !-------
         ! INPUT
         !-------
-        !
-        ! fname : character : filename 
+        !  
+        ! path  : character : Path to the file 
+        ! fname : character : Filename 
         ! 
         !--------
         ! OUTPUT
@@ -226,13 +230,14 @@ Module TABLE
         !IN/OUT
 
         character(len=*) :: fname       ! File name 
+        character(len=*) :: path        ! Path to the file
         integer :: get_number_of_lines  ! Number of line in the file 
 
         ! INTERNAL
         integer :: io                   ! read_status
 
         !Open the file 
-        open(unit=200, file=Trim(env_datapath)//'/'//Trim(fname),status='old')
+        open(unit=200, file=Trim(path)//'/'//Trim(fname),status='old')
 
         ! initialize the counter
         get_number_of_lines = 0 
@@ -354,8 +359,8 @@ Module TABLE
         ! If the location index is 0, it mean that the asked column does not exist 
         if (iloc == 0) then
             ! Return errors 
-            write(30,*) "[ENV] The column", colname, "is not in the table" 
-            write(30,*) "[ENV] Provided header : ", me%header 
+            write(30,*) "[TABLE] The column", colname, "is not in the table" 
+            write(30,*) "[TABLE] Provided header : ", me%header 
             stop
         end if 
 
@@ -392,8 +397,8 @@ Module TABLE
         ! as the data_table columns
         if (size(col_data) /= me%n_rows) then 
             ! If not, return an error and stop 
-            write(30,*) "[ENV] Added column does not have the same number of rows as the table "
-            write(30,*) "[ENV] Header of the added column :", trim(header)
+            write(30,*) "[TABLE] Added column does not have the same number of rows as the table "
+            write(30,*) "[TABLE] Header of the added column :", trim(header)
             stop
         end if 
 
@@ -426,7 +431,7 @@ Module TABLE
 
     end subroutine 
 
-    function create_table(header,data_array)
+    function create_table(header,data_array,n_rows,n_cols)
         ! Create a data_table using an array of headers and data
         ! 
         ! USAGE : create_table('a,b,c',[A,B,C]) 
@@ -448,24 +453,64 @@ Module TABLE
         ! IN/OUT
         character(len=*) :: header
         double precision, dimension(:) :: data_array  
+        integer :: n_cols, n_rows
 
         type(data_table) :: create_table 
 
         ! Internals 
-        integer :: n_cols, n_rows 
         character(len=50), dimension(:), allocatable :: tmp_header 
+        integer :: i
+
+        ! Check if the  size of data_array is coherent with the asked numbers of rows and cols 
+        if (n_rows * n_cols .ne. size(data_array)) then 
+            ! If not, output errors and stop programms
+
+            WRITE(*,*) "[TABLE] ERROR In create_table function, data_array size not equal to n_rows * n_cols"
+            WRITE(*,*) "Header :", header
+            Write(*,*) "Asked number of rows: " , n_rows
+            Write(*,*) "Asked number of columns" , n_cols
+            WRITE(*,*) "Array length :" , size(data_array)
+            Write(*,*) "n_cols * n_rows" , n_cols * n_rows
+
+            stop
+        end if 
+
+        ! Allocate the number of columns and rows  
+        create_table%n_cols = n_cols
+        create_table%n_rows = n_rows
+
+        ! Allocate header and table arrays in create_table object
+        allocate(create_table%header(n_cols))
+        allocate(create_table%table(n_rows,n_cols))
 
         ! First get the header array
-        tmp_header = split(header,",")
-        create_table%n_cols = size(tmp_header)
+        tmp_header = split(header,",")              ! Create the temporary header array 
+
+        ! verify if there is enought header entries
+        if (size(tmp_header) .neq. n_cols ) then   =
+            ! If not, output errors and stop programms
+            
+            write(*,*) "[TABLE] Not the same number of header entries and asked number of columns"
+            write(*,*) "Header: ", header
+            write(*,*) "Header size: ", size(header)
+            write(*,*) "Asked number of columns", n_cols
+            
+            stop
+        end if 
+
+        ! store the header in the object 
         create_table%header = tmp_header
 
-        ! Check if all column will be heavenly filled
-        if (modulo(size(data_array),size(header)) /=0) then 
-            ! if not return an error and stop
-            write(30,*) "[ENV] "
-            stop
-        end if
+        ! Fill the table
+        do i=1,n_rows
+            do j=1, n_cols
+
+            ! Fill the table row by row
+            create_table%table(i,j) =  values(i+(j-1)*n_rows)
+
+            end do 
+        end do 
+
 
     end function 
 
