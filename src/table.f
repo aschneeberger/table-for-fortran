@@ -1,6 +1,8 @@
 !! @author : Antoine Schneeberger 
-!! @mail : antoine.schneeberger@lam.fr
-Module ENV 
+!! @mail : antoine.schneeberger@protonmail.com
+
+
+Module TABLE 
     ! Module made for working environment management 
     ! It containes all path variables and will aim 
     ! to contains parallelisation status. 
@@ -27,50 +29,6 @@ Module ENV
     end type 
 
     contains 
-
-    subroutine init_env()
-        ! Will initialize env variables. 
-        ! It will initialize the data path.
-        
-        ! INTERNALS
-        character(len=255) :: path       ! Current working path  
-        character(len=255) :: datapath   ! Generated datapath
-        character(len=255) :: dir_elems   ! Generated datapath
-        
-        ! Get the working directory 
-        call getcwd(path) 
-
-        !Add to the path the relative area where all data folders are stored
-
-        ! From the working directory and the asked data directory name, 
-        ! create the absolute data path 
-        datapath = Trim(path)//"/"//Trim(p_datadir)
-
-        ! Check if p_datadir already exist
-        dir_elems = listdir(path)
-
-        ! the index method return 0 if there is no folder of the name p_datadir 
-        ! TODO change with split
-        if (index(dir_elems,Trim(p_datadir)) == 0) then 
-
-            ! Create the data directory if it does not exist 
-            ! by a call to the terminal 
-            call execute_command_line('mkdir '//DATAPATH)
-
-        else 
-
-            ! Verify data files are present in p_datadir. If there are,
-            ! The programme Stop and send an Error.
-            dir_elems = listdir(datapath) 
-
-            if (index(dir_elems,".csv") /= 0) stop '[ENV ERROR] Data files already present in the data directory'
-
-        end if 
-
-        ! Setup the env_datapath variable in the module
-        env_datapath = datapath
-
-    end subroutine 
 
 
     function listdir(path) 
@@ -511,4 +469,4 @@ Module ENV
 
     end function 
 
-end module ENV
+end module TABLE
