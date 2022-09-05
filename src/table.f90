@@ -76,7 +76,7 @@ module TABLE
         
     end function 
 
-    subroutine write_file(path,fname, values, N_rows, N_cols, colnames)
+    subroutine write_file(me,path,fname)
         ! Subroutine parsing, formating and writing datas in a file
         !-----
         !INPUT
@@ -84,18 +84,11 @@ module TABLE
         !
         ! fname : character : name of the  file 
         ! path : character : path to the file 
-        ! values  : double precision : data to write 
-        ! N_rows : integer : number of rows  
-        ! N_cols : integer : number of columns
-        ! colnames : character : names of the columns formatted as "col1 col2 col3" 
 
         !IN/OUT
+        class(data_table) :: me 
         character(len=*),intent(in) :: fname ! file name 
         character(len=*),intent(in) :: path ! file name 
-        character(len=*),intent(in) :: colnames ! columns names 
-
-        integer,intent(in) :: N_rows, N_cols 
-        double precision, dimension(:),intent(in) :: values
         
 
         !Internals
@@ -103,32 +96,20 @@ module TABLE
         character(len=1000) :: line 
         integer :: n_character
 
-        ! Check if Number of values is coherent with the asked numbers of rows and cols 
-        if (N_rows * N_cols .ne. size(values)) then 
-
-            WRITE(*,*) "[TABLE] ERROR In write_file subroutine, values array size not equal to N_rows * N_cols"
-            WRITE(*,*) "File :", fname
-            WRITE(*,*) "Header :", colnames
-            WRITE(*,*) "array length :" , size(values)
-            Write(*,*) "Asked number of rows: " , N_rows
-            Write(*,*) "Asked number of columns" , N_cols
-            Write(*,*) "N_cols * N_rows" , N_cols * N_rows
-            stop
-            
-        end if 
-
 
         ! Create the file 
         open(unit=300,file=Trim(path)//'/'//Trim(fname),status='new')
 
-        ! Write the columns names 
-        write(300,'(A)') colnames
+        ! Write the columns names
+        103 format((A),",")
+        
+        write(300,103) (me%header(i) , j=1,me%n_cols)
         
         ! Format and write values
         101 format(*(E24.17e3, ","))
-        do i=1,N_rows
+        do i=1,me%n_rows
             ! write each line of the file 
-            write(line,101) (values(i+(j-1)*N_rows) , j=1,N_cols)
+            write(line,101) (me%table(i,j) , j=1,me%n_cols)
             ! remove the last comma before write
             n_character = len(trim(line))
             write(300,'(A)') line(:n_character-1)
