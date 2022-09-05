@@ -459,7 +459,7 @@ module TABLE
 
         ! Internals 
         character(len=50), dimension(:), allocatable :: tmp_header 
-        integer :: i
+        integer :: i,j
 
         ! Check if the  size of data_array is coherent with the asked numbers of rows and cols 
         if (n_rows * n_cols .ne. size(data_array)) then 
@@ -487,12 +487,12 @@ module TABLE
         tmp_header = split(header,",")              ! Create the temporary header array 
 
         ! verify if there is enought header entries
-        if (size(tmp_header) .neq. n_cols ) then   =
+        if (size(tmp_header) /= n_cols) then  
             ! If not, output errors and stop programms
             
             write(*,*) "[TABLE] Not the same number of header entries and asked number of columns"
             write(*,*) "Header: ", header
-            write(*,*) "Header size: ", size(header)
+            write(*,*) "Header size: ", size(tmp_header)
             write(*,*) "Asked number of columns", n_cols
             
             stop
@@ -506,7 +506,7 @@ module TABLE
             do j=1, n_cols
 
             ! Fill the table row by row
-            create_table%table(i,j) =  values(i+(j-1)*n_rows)
+            create_table%table(i,j) =  data_array(i+(j-1)*n_rows)
 
             end do 
         end do 
