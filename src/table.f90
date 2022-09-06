@@ -120,7 +120,7 @@ module TABLE
         
     end subroutine 
 
-    subroutine read_csv(path,fname, table)
+    function read_csv(path,fname)
         ! Subroutine reading csv files and parsing them into an array of colnames 
         ! and matrix of values. 
         !
@@ -144,7 +144,7 @@ module TABLE
         character(len=*), intent(in) :: fname
         character(len=*), intent(in) :: path
         
-        type(data_table), intent(inout) :: table
+        type(data_table) :: read_csv
 
         ! INTERNALS 
         character(len=1000) :: line_string                                            ! First line of the file                                    
@@ -155,7 +155,7 @@ module TABLE
         integer :: j,k                                                                  ! Iterators 
 
         ! Get the number of rows (-1 for the header)
-        table%n_rows = get_number_of_lines(path,fname) - 1
+        read_csv%n_rows = get_number_of_lines(path,fname) - 1
 
         ! Open the file 
         open(unit=300,file=Trim(path)//'/'//Trim(fname),status='old')     ! Open the file
@@ -164,16 +164,16 @@ module TABLE
         
         read(300,'(A)') line_string                    ! Get the first line  
         header = split(line_string,',')                ! Split it into an array of column names 
-        table%n_cols = size(header)                    ! Get the Number of columns
+        read_csv%n_cols = size(header)                    ! Get the Number of columns
         
     
         ! Allocate the matrix table size 
-        allocate(table%table(table%n_rows,table%n_cols),table%header(n_cols))
+        allocate(read_csv%table(read_csv%n_rows,read_csv%n_cols),read_csv%header(n_cols))
 
-        table%header = header 
+        read_csv%header = header 
 
         ! read the table 
-        do j=1, table%n_rows 
+        do j=1, read_csv%n_rows 
 
             ! get the line as a character string 
             read(300,'(A)') line_string  
@@ -182,15 +182,15 @@ module TABLE
             line_split = split(line_string,',')
 
             ! Convert it into double precision for each values 
-            do k=1, table%n_cols
-                read(line_split(k),'(E24.17e3)') table%table(j,k)
+            do k=1, read_csv%n_cols
+                read(line_split(k),'(E24.17e3)') read_csv%table(j,k)
             end do 
 
         end do 
 
         close(300)
         
-    end subroutine 
+    end function 
 
 
     function get_number_of_lines(path,fname)
