@@ -1,30 +1,33 @@
 # table-for-fortran
-Table for fortran working in a similar way as for `astropy` or `pandas`. At the momment can only read and write csv. 
+Table for fortran works in a similar way as `astropy` or `pandas` python libraries. At the moment it can only read and write CSVs. 
 
 # Installation
 
 ## Git submodule  
 
-This module can be used as a git submodule in your git project. Go in your source code folder and run the command:
+This module can be installed as a git submodule in your git project. To do so, go in your source code folder and run the following command:
 ```
 git submodule add git@github.com:aschneeberger/table-for-fortran.git
 ```
-A folder `table-for-fortran` should appear in your source code folder. 
+A folder `table-for-fortran` should appears in your source code folder. 
 ## Integrating it to your project 
 
-The `TABLE` module is contained in the `table.f90`. You can integrate it to your project. First by compiling the source code as a module: 
+The `TABLE` module is contained in the `table.f90` file. To integrate it in your project, you need to import the module in your project and then to compile it as a module object with your source code. 
+
+To import the module in your main program just add the following line at the beginning of your code: 
+
+````fortran 
+USE TABLE
+````
+
+Then compile it as a module object, run the following comment:  
 
 ```
 gfortran -c [PATH-TO-MODULE]/src/table.f90 
 ```
-And then compiling the module object `table.o` with your programme.
+Finally compile the module object `table.o` with your programme.
 ````
 gfortran [YOUR-CODE] table.o 
-````
-To import the module in your main programm just add the following line: 
-
-````fortran 
-USE TABLE
 ````
 
 # Usage 
@@ -37,7 +40,7 @@ The Table is defined as a `type` called `data_table`. This type contains :
  - `header` : All column headers (an array of character strings)
  - `table`  : The table itself, a matrix of `double precision` of dimension `(n_rows,n_cols)`
 
-All objects in the data_table type can accessed as in any FORTRAN classes with the `%`symbole. 
+All objects in the `data_table` type can accessed as in any FORTRAN class with the `%` symbol. 
 
 __Example__: 
 ```fortran
@@ -49,7 +52,7 @@ table%n_cols = 2         ! Set the number of columns to 2
 
 ### From existing data 
 
-A table can be created from existing data by using the `create_table` function. 
+A table can be created from existing data with the `create_table` function. 
 
 __Example__
 ````Fortran
@@ -67,16 +70,16 @@ my_table = create_table('colname1,colname2,colname3',[data1,data2,data3],4,3)
 
 ### From a CSV 
 
-You can read CSVs with the TABLE module. The CSV table is is transposed in a `data_table`. You only need to know the path and the csv name. 
+You can read CSVs with the TABLE module. The CSV table is transposed in a `data_table`. You only need to know the path and the CSV file name. 
 
 __Example__
 ```Fortran 
-USE TABLE  ! Import the table moduel 
+USE TABLE  ! Import the table  module 
 
 type(data_table) : my_table  ! declare the table
  
 ! Read a CSV file and import it in the table
-my_table= read_csv('path_to_file','filename')
+my_table = read_csv('path_to_file','filename')
 ```
 
 ## Read the table
@@ -91,14 +94,14 @@ If we want to get the column with the header `colname1` in the table `my_table` 
 double precision , dimension(:) , allocatable :: retreived_data 
 
 ! Get the the column from the table 
-retreived_data = my_table%get_column('column1')
+retrieved_data = my_table%get_column('column1')
 ```
 
 ## Modify the table 
 
 ### Add a column
 
-It is possible you want to add a column in your table after it is created. The column you want to add must have the same number of rows as the `data_table` where you add the column. You can add a column with the `add_column` method. 
+To add a column in your table after its creation use the `add_column` method. The column you want to add must have the same number of rows as the `data_table` which you want to append the column.
 
 __Example__
 
@@ -114,4 +117,4 @@ my_table%add_column('column4',data4)
 
 # Future development 
 
-There are still some method that need to be implemented such as an `add_row` method. Don't hesitate to submit pull request or open issues if you want to add some features.
+There are still some methods that need to be implemented such as an `add_row` method. Don't hesitate to submit pull requests or open issues if you want to add some features.
