@@ -106,7 +106,7 @@ module TABLE
         
         write(line,103) (trim(me%header(j)) , j=1,me%n_cols)
 
-        write(300,'(A)') line(:len(line)-1)
+        write(300,'(A)') line(:len(trim(line))-1)
         
         ! Format and write values
         101 format(*(E26.17e3, ","))
