@@ -104,7 +104,9 @@ module TABLE
         ! Write the columns names
         103 format(*(A,","))
         
-        write(300,103) (trim(me%header(j)) , j=1,me%n_cols)
+        write(line,103) (trim(me%header(j)) , j=1,me%n_cols)
+
+        write(300,'(A)') line(:len(line)-1)
         
         ! Format and write values
         101 format(*(E26.17e3, ","))
