@@ -107,7 +107,7 @@ module TABLE
         write(300,103) (trim(me%header(j)) , j=1,me%n_cols)
         
         ! Format and write values
-        101 format(*(E24.17e3, ","))
+        101 format(*(E25.17e3, ","))
         do i=1,me%n_rows
             ! write each line of the file 
             write(line,101) (me%table(i,j) , j=1,me%n_cols)
