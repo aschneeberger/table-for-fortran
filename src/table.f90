@@ -94,7 +94,7 @@ module TABLE
 
         !Internals
         integer :: i,j ! iterators 
-        character(len=1000) :: line 
+        character(len=2000) :: line 
         integer :: n_character
 
 
