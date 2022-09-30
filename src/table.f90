@@ -94,12 +94,12 @@ module TABLE
 
         !Internals
         integer :: i,j ! iterators 
-        character(len=2000) :: line 
+        character(len=10000) :: line 
         integer :: n_character
 
 
         ! Create the file 
-        open(unit=300,file=Trim(path)//'/'//Trim(fname),status='new')
+        open(unit=300,file=Trim(path)//'/'//Trim(fname),status='replace')
 
         ! Write the columns names
         103 format(*(A,","))
