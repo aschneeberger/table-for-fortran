@@ -115,6 +115,21 @@ double precision, dimension(4) :: data4
 my_table%add_column('column4',data4)
 ```
 
+## Save the table in a CSV 
+
+To save the table in a CSV file, use the  `write_csv` method. It will save the table in a formatted double precision csv table. 
+
+__Example__
+
+To save the table in file `my_table.csv` in the folder `my_folder`: 
+
+```Fortran 
+! Using the table my_table from previous examples 
+
+my_table%write_csv('my_folder','my_table.csv')
+
+```
+
 # Future development 
 
 There are still some methods that need to be implemented such as an `add_row` method. Don't hesitate to submit pull requests or open issues if you want to add some features.
