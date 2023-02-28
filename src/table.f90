@@ -343,8 +343,8 @@ module TABLE
         ! If the location index is 0, it mean that the asked column does not exist 
         if (iloc == 0) then
             ! Return errors 
-            write(30,*) "[TABLE] The column", colname, "is not in the table" 
-            write(30,*) "[TABLE] Provided header : ", me%header 
+            write(*,*) "[TABLE] The column", colname, "is not in the table" 
+            write(*,*) "[TABLE] Provided header : ", me%header 
             stop
         end if 
 
@@ -381,8 +381,8 @@ module TABLE
         ! as the data_table columns
         if (size(col_data) /= me%n_rows) then 
             ! If not, return an error and stop 
-            write(30,*) "[TABLE] Added column does not have the same number of rows as the table "
-            write(30,*) "[TABLE] Header of the added column :", trim(header)
+            write(*,*) "[TABLE] Added column does not have the same number of rows as the table "
+            write(*,*) "[TABLE] Header of the added column :", trim(header)
             stop
         end if 
 
