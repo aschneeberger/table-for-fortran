@@ -150,8 +150,7 @@ module TABLE
 
         ! INTERNALS 
         character(len=1000) :: line_string                                            ! First line of the file                                    
-        integer :: n_rows, n_cols                                                       ! Number of columns and rows 
-        character(len=24), dimension(:), allocatable  :: line_split  
+        character(len=50), dimension(:), allocatable  :: line_split  
         character(len=50), dimension(:), allocatable :: header                    ! Array of column names 
 
         integer :: j,k                                                                  ! Iterators 
@@ -170,7 +169,7 @@ module TABLE
         
     
         ! Allocate the matrix table size 
-        allocate(read_csv%table(read_csv%n_rows,read_csv%n_cols),read_csv%header(n_cols))
+        allocate(read_csv%table(read_csv%n_rows,read_csv%n_cols),read_csv%header(read_csv%n_cols))
 
         read_csv%header = header 
 
