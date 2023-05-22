@@ -502,7 +502,7 @@ module TABLE
 
 
     subroutine write_hdf5(me,path,fname)
-        ! Write the table in an HDF5 file. In which the table is sorted as 
+        ! Write the table in an HDF5 file. In which the table is stored as 
         ! 2D matrix to which an attribute is attached wich store the header. 
         !
         !
@@ -625,6 +625,7 @@ module TABLE
     
         ! Close the dataset 
         call h5dclose_f(dataset_id, error)
+        call h5sclose_f(dataspace_id, error)
 
         ! Close the file 
         call h5fclose_f(file_id, error)
@@ -633,5 +634,71 @@ module TABLE
         call h5close_f(error)
     
     end subroutine
+
+
+    function read_hdf5(path, fname)
+        ! Create a data table from an HDF5 file. In which the table is stored as 
+        ! 2D matrix to which an attribute is attached wich store the header. 
+
+        ! IN/OUT
+        character(len=*) :: path        ! Path to the file
+        character(len=*) :: fname       ! name of the hdf5 file
+
+        type(data_table) :: table
+
+        
+        ! INTERNALS 
+
+        double precision, dimension(:,:) :: data    ! 2D matrix with the datas
+        character(len=50), dimension(:)  :: header  ! Array of strings storing the header
+
+        
+        ! All the ids 
+        integer(HID_T) :: file_id           ! ID of the HDF5 objects
+        integer(HID_T) :: dataset_id        ! ID of the dataset object within the HDF5 object 
+        integer(HID_T) :: dataspace_id      ! ID of the dataspace (space needed for the dataset)
+        integer(HID_T) :: attribute_id      ! ID of the dataset attribute 
+        integer(HID_T) :: attr_dataspace_id ! ID of the attribute dataspace (space needed for the attribute)
+        integer(HID_T) :: atype_id          ! ID of the attribute data type, is copied to customize character length
+        integer(kind=4) :: error             ! Error code
+        
+        integer(HID_T) , dimension(2) :: matrix_dims 
+        integer(HID_T) , dimension(2) :: matrix_max_dims 
+        integer(HID_T) , dimension(1) :: header_dims
+
+        ! Initialize HDF5 librairy 
+        call h5open_f(error)
+
+        ! Open the file (read-only)
+        ! Create a new file
+        call h5fopen_f(trim(path)//'/'//trim(fname),&    ! Path to the HDF5 file
+                         H5F_ACC_RDONLY_F, &             ! Open in readonly mode   
+                         file_id,&                       ! File ID 
+                         error)                          ! If works return 0, if it fail return -1 
+        
+        if (error == -1) then
+            write(*,*) '[TABLE] ERROR FATAL : HDF5 file creation failed, file '//trim(path)//'/'//trim(fname)//' already exist'
+            stop 
+        end if  
+        
+        ! Open the table data set 
+        call h5dopen_f(file_id,&        ! File ID 
+                       "table",&        ! Dataset name 
+                       dataset_id,&     ! ID of the dataset (OUTPUT)
+                       error)           ! ERROR code 
+
+        ! Get the table size
+
+        call h5dget_space_f(dataset_id,&
+                            dataspace_id,&
+                            error)
+
+        call h5sget_simple_extent_dims_f(dataspace_id,&
+                                         matrix_dims,&
+                                         matrix_max_dims,&
+                                         error)
+        
+        ! read the data in the dataset 
+    end function
     
 end module TABLE    
