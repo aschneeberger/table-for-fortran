@@ -544,10 +544,10 @@ module TABLE
         attr_dims = [me%n_cols]
 
         ! Initialize HDF5 library
-        CALL h5open_f(error)
+        call h5open_f(error)
     
         ! Create a new file
-        CALL h5fcreate_f(trim(path)//'/'//trim(fname),&    ! Path to the HDF5 file
+        call h5fcreate_f(trim(path)//'/'//trim(fname),&    ! Path to the HDF5 file
                          H5F_ACC_EXCL_F, &                    ! If the file already exist the file creation fails  
                          file_id,&                           ! File ID 
                          error)                            ! If works return 0, if it fail return -1 
@@ -558,7 +558,7 @@ module TABLE
         end if  
     
         ! Create the data space for the dataset
-        CALL h5screate_simple_f(2, &            ! Dimension of the dataset, here 2 since its a matrix 
+        call h5screate_simple_f(2, &            ! Dimension of the dataset, here 2 since its a matrix 
                                 dims, &         ! Dimension in both dimension
                                 dataspace_id, & ! Id of the dataspace (output by the routine)
                                 error)          ! Error code 
@@ -569,7 +569,7 @@ module TABLE
         end if  
                                
         ! Create the dataset with the name 'table'
-        CALL h5dcreate_f(file_id, &         ! File identifier
+        call h5dcreate_f(file_id, &         ! File identifier
                         'table', &          ! Dataset name 
                         H5T_IEEE_F64LE, &   ! data type identifier see table here :  https://docs.hdfgroup.org/hdf5/develop/_h5_t__u_g.html
                         dataspace_id, &     ! dataspace identifier (input) 
@@ -582,37 +582,56 @@ module TABLE
         end if         
 
         ! Write the data to the dataset
-        CALL h5dwrite_f(dataset_id,&   ! Identifier of the dataset to write 
+        call h5dwrite_f(dataset_id,&   ! Identifier of the dataset to write 
                         H5T_NATIVE_DOUBLE,&           ! Identifier of the memory datatype. here float 
                         me%table,&                  ! Buffer with data to be written to the file.
                         dims,&                      ! Dimensions of the array 
                         error)                      ! Error code
     
         ! Create dataspace for attribute
-        CALL h5screate_simple_f(1,&                 ! Number of the dimensions of the attribut (for header so one)
+        call h5screate_simple_f(1,&                 ! Number of the dimensions of the attribut (for header so one)
                                 attr_dims,&         ! Dimension fo the attribute
                                 attr_dataspace_id,& ! id the of the attribute dataspace
                                 error)              ! Error code
     
         ! Create a datatype for the attribute, which copy the one  from HST_NATIVE_CHARACTER
-        CALL h5tcopy_f(H5T_C_S1, atype_id, error)
-        CALL h5tset_size_f(atype_id, attrlen, error)
-        !CALL h5tset_strpad_f(atype_id, H5T_PAD_ZERO_F, error)
+        call h5tcopy_f(H5T_NATIVE_CHARACTER,& ! Data type to copy 
+                       atype_id,&             ! variable where it needs to be copied 
+                       error)                 ! Error code 
+
+        ! Set the size of each string in the header (set to 50)
+        call h5tset_size_f(atype_id,&   ! ID of the data type 
+                           attrlen,&    ! length of  the strings (50)
+                           error)       ! Error code
     
         ! Create and write attribute (header)
-        CALL h5acreate_f(dataset_id, "headers", atype_id, attr_dataspace_id, attribute_id, error)
-        CALL h5awrite_f(attribute_id, atype_id, me%header, attr_dims ,error)
+        call h5acreate_f(dataset_id,&           ! ID of the data set to which the header is attached
+                         "headers",&            ! Name of the attribute 
+                          atype_id,&            ! Data type 
+                          attr_dataspace_id,&   ! ID of the attribute data space 
+                          attribute_id,&        ! ID of the attribute (outputed)
+                          error)                ! Error code 
+
+        ! Write the attribute in the file 
+        call h5awrite_f(attribute_id,&      ! Attribute ID to write 
+                        atype_id,&          ! Data type ID
+                        me%header,&         ! Header from the table, writen in the attribute 
+                        attr_dims,&         ! Attribute dimnension (number of columns)
+                        error)              ! Error code
     
         ! Close attribute and its dataspace
-        CALL h5aclose_f(attribute_id, error)
-        CALL h5sclose_f(attr_dataspace_id, error)
+        call h5aclose_f(attribute_id, error)
+        call h5sclose_f(attr_dataspace_id, error)
     
-        ! Close everything else
-        CALL h5dclose_f(dataset_id, error)
-        CALL h5fclose_f(file_id, error)
-        CALL h5close_f(error)
+        ! Close the dataset 
+        call h5dclose_f(dataset_id, error)
 
+        ! Close the file 
+        call h5fclose_f(file_id, error)
+
+        ! Close the module
+        call h5close_f(error)
     
     end subroutine
     
-end module TABLE
+end module TABLE    
