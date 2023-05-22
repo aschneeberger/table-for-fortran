@@ -3,6 +3,8 @@
 
 
 module TABLE 
+    use hdf5 ! To write tables in  HDF5 files 
+
     ! Module made for working environment management 
     ! It containes all path variables and will aim 
     ! to contains parallelisation status. 
@@ -25,6 +27,7 @@ module TABLE
         procedure , public :: get_column                     ! Return the array corresponding the provided column name
         procedure , public :: add_column                     ! Add a column to the table
         procedure , public :: write_csv                      ! Write the table in a CSV file
+        procedure , public :: write_hdf5                     ! Write the table in a HDF5 file
 
     end type 
 
@@ -496,4 +499,121 @@ module TABLE
 
     end function 
 
+
+    subroutine write_hdf5(me,path,fname)
+        ! Write the table in an HDF5 file. In which the table is sorted as 
+        ! 2D matrix to which an attribute is attached wich store the header. 
+        !
+        !
+        ! NOTE FOR DEV : Open flag for the file
+        !
+        ! H5F_ACC_EXCL 	    If the file already exists, H5Fcreate fails. If the file does not exist, it is created and opened with read-write access. (Default)
+        ! H5F_ACC_TRUNC 	If the file already exists, the file is opened with read-write access, and new data will overwrite any existing data. If the file does not exist, it is created and opened with read-write access.
+        ! H5F_ACC_RDONLY 	An existing file is opened with read-only access. If the file does not exist, H5Fopen fails. (Default)
+        ! H5F_ACC_RDWR 	    An existing file is opened with read-write access. If the file does not exist, H5Fopen fails.
+
+
+        !IN/OUT
+        class(data_table) :: me
+
+        character(len=*) , intent(in) :: path    ! Path where to save the file 
+        character(len=*) , intent(in):: fname   ! ! file name 
+
+        ! INTERNALS
+        ! All the ids 
+        integer(HID_T) :: file_id           ! ID of the HDF5 objects
+        integer(HID_T) :: dataset_id        ! ID of the dataset object within the HDF5 object 
+        integer(HID_T) :: dataspace_id      ! ID of the dataspace (space needed for the dataset)
+        integer(HID_T) :: attribute_id      ! ID of the dataset attribute 
+        integer(HID_T) :: attr_dataspace_id ! ID of the attribute dataspace (space needed for the attribute)
+        integer(HID_T) :: atype_id          ! ID of the attribute data type, is copied to customize character length
+        integer(kind=4) :: error             ! Error code
+
+        !All the sizes
+        integer(HSIZE_T), dimension(2) :: dims          ! size of the data_table 
+        integer(HSIZE_T), dimension(1) ::  attr_dims     ! size of the header (attribute)
+        INTEGER(SIZE_T) :: attrlen  = 50                      ! Length of the attribute string
+        CHARACTER(LEN = 10) :: attr_name                ! Attribute name ('headers')
+        
+
+        integer :: i, j  ! all the iterators         
+
+        dims = [me%n_rows, me%n_cols]
+
+        attr_dims = [me%n_cols]
+
+        ! Initialize HDF5 library
+        CALL h5open_f(error)
+    
+        ! Create a new file
+        CALL h5fcreate_f(trim(path)//'/'//trim(fname),&    ! Path to the HDF5 file
+                         H5F_ACC_EXCL_F, &                    ! If the file already exist the file creation fails  
+                         file_id,&                           ! File ID 
+                         error)                            ! If works return 0, if it fail return -1 
+        
+        if (error == -1) then
+            write(*,*) '[TABLE] ERROR FATAL : HDF5 file creation failed, file '//trim(path)//'/'//trim(fname)//' already exist'
+            stop 
+        end if  
+    
+        ! Create the data space for the dataset
+        CALL h5screate_simple_f(2, &            ! Dimension of the dataset, here 2 since its a matrix 
+                                dims, &         ! Dimension in both dimension
+                                dataspace_id, & ! Id of the dataspace (output by the routine)
+                                error)          ! Error code 
+
+        if (error == -1) then
+            write(*,*) '[TABLE] ERROR FATAL : HDF5 file creation failed,'//trim(path)//'/'//trim(fname)//' table dataspace creation failed'
+            stop 
+        end if  
+                               
+        ! Create the dataset with the name 'table'
+        CALL h5dcreate_f(file_id, &         ! File identifier
+                        'table', &          ! Dataset name 
+                        H5T_IEEE_F64LE, &   ! data type identifier see table here :  https://docs.hdfgroup.org/hdf5/develop/_h5_t__u_g.html
+                        dataspace_id, &     ! dataspace identifier (input) 
+                        dataset_id, &       ! dataset identifier  (ouput)
+                        error)              ! Error code 
+
+        if (error == -1) then
+            write(*,*) '[TABLE] ERROR FATAL : HDF5 file creation failed,'//trim(path)//'/'//trim(fname)//'table datasset creation failed'
+            stop 
+        end if         
+
+        ! Write the data to the dataset
+        CALL h5dwrite_f(dataset_id,&   ! Identifier of the dataset to write 
+                        H5T_NATIVE_DOUBLE,&           ! Identifier of the memory datatype. here float 
+                        me%table,&                  ! Buffer with data to be written to the file.
+                        dims,&                      ! Dimensions of the array 
+                        error)                      ! Error code
+    
+        ! Create dataspace for attribute
+        CALL h5screate_simple_f(1,&                 ! Number of the dimensions of the attribut (for header so one)
+                                attr_dims,&         ! Dimension fo the attribute
+                                attr_dataspace_id,& ! id the of the attribute dataspace
+                                error)              ! Error code
+    
+        ! Create a datatype for the attribute, which copy the one  from HST_NATIVE_CHARACTER
+        CALL h5tcopy_f(H5T_C_S1, atype_id, error)
+        CALL h5tset_size_f(atype_id, attrlen, error)
+        !CALL h5tset_strpad_f(atype_id, H5T_PAD_ZERO_F, error)
+    
+        ! Create and write attribute (header)
+        CALL h5acreate_f(dataset_id, "headers", atype_id, attr_dataspace_id, attribute_id, error)
+        CALL h5awrite_f(attribute_id, atype_id, me%header, attr_dims ,error)
+    
+        ! Close attribute and its dataspace
+        CALL h5aclose_f(attribute_id, error)
+        CALL h5sclose_f(attr_dataspace_id, error)
+    
+        ! Close everything else
+        CALL h5dclose_f(dataset_id, error)
+        CALL h5fclose_f(file_id, error)
+        CALL h5close_f(error)
+    
+        ! Close the datatype
+        CALL h5tclose_f(attribute_id, error)
+    
+    end subroutine
+    
 end module TABLE
