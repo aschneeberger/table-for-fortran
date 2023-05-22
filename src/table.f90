@@ -611,9 +611,7 @@ module TABLE
         CALL h5dclose_f(dataset_id, error)
         CALL h5fclose_f(file_id, error)
         CALL h5close_f(error)
-    
-        ! Close the datatype
-        CALL h5tclose_f(attribute_id, error)
+
     
     end subroutine
     
