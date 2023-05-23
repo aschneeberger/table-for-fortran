@@ -636,7 +636,7 @@ module TABLE
     end subroutine
 
 
-    function read_hdf5(path, fname)
+    function read_hdf5(path, fname) result(table)
         ! Create a data table from an HDF5 file. In which the table is stored as 
         ! 2D matrix to which an attribute is attached wich store the header. 
 
@@ -646,12 +646,7 @@ module TABLE
 
         type(data_table) :: table
 
-        
-        ! INTERNALS 
-
-        double precision, dimension(:,:) :: data    ! 2D matrix with the datas
-        character(len=50), dimension(:)  :: header  ! Array of strings storing the header
-
+        !INTERNALS
         
         ! All the ids 
         integer(HID_T) :: file_id           ! ID of the HDF5 objects
@@ -665,6 +660,8 @@ module TABLE
         integer(HID_T) , dimension(2) :: matrix_dims 
         integer(HID_T) , dimension(2) :: matrix_max_dims 
         integer(HID_T) , dimension(1) :: header_dims
+        INTEGER(SIZE_T) :: attrlen  = 50                      ! Length of the attribute string
+
 
         ! Initialize HDF5 librairy 
         call h5open_f(error)
@@ -698,7 +695,49 @@ module TABLE
                                          matrix_max_dims,&
                                          error)
         
+        ! Set up the table size
+        allocate(table%table(matrix_dims(1),matrix_dims(2)))
+        allocate(table%header(matrix_dims(2)))
+
+        table%n_rows = matrix_dims(1)
+        table%n_cols = matrix_dims(2)
+        
         ! read the data in the dataset 
+        call h5dread_f(dataset_id,&
+                       H5T_NATIVE_DOUBLE,&
+                       table%table,&
+                       matrix_dims,&
+                       error)
+        
+        ! Open the attribute
+        call h5aopen_name_f(dataset_id,&
+                            "headers",&
+                            attribute_id,&
+                            error)
+        
+        ! Create a datatype for the attribute, which copy the one  from HST_NATIVE_CHARACTER
+        call h5tcopy_f(H5T_NATIVE_CHARACTER,& ! Data type to copy 
+                        atype_id,&             ! variable where it needs to be copied 
+                        error)                 ! Error code 
+
+        ! Set the size of each string in the header (set to 50)
+        call h5tset_size_f(atype_id,&   ! ID of the data type 
+                           attrlen,&    ! length of  the strings (50)
+                           error)       ! Error code                   
+
+        ! Read the header
+        call h5aread_f(attribute_id,&
+                       atype_id,& 
+                       table%header,&
+                       [matrix_dims(2)],&
+                       error)
+
+        ! Close everything
+        call h5aclose_f(attribute_id,error)
+        call h5dclose_f(dataset_id,error)
+        call h5fclose_f(file_id,error)
+        call h5close_f(error)
+        
     end function
     
 end module TABLE    
