@@ -187,7 +187,7 @@ module TABLE
 
             ! Convert it into double precision for each values 
             do k=1, read_csv%n_cols
-                read(line_split(k),'(E24.17e3)') read_csv%table(j,k)
+                read(line_split(k),'(E26.17e3)') read_csv%table(j,k)
             end do 
 
         end do 
