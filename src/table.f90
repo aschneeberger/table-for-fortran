@@ -470,8 +470,7 @@ module TABLE
         allocate(create_table%table(n_rows,n_cols))
 
         ! First get the header array
-        tmp_header = split(header,",")              ! Create the temporary header array 
-
+        tmp_header = split(trim(header),",")              ! Create the temporary header array 
         ! verify if there is enought header entries
         if (size(tmp_header) /= n_cols) then  
             ! If not, output errors and stop programms
