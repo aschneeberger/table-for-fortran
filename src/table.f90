@@ -466,6 +466,7 @@ module TABLE
         create_table%n_rows = n_rows
 
         ! Allocate header and table arrays in create_table object
+        allocate(tmp_header(n_cols))
         allocate(create_table%header(n_cols))
         allocate(create_table%table(n_rows,n_cols))
 
@@ -533,10 +534,7 @@ module TABLE
         integer(HSIZE_T), dimension(2) :: dims          ! size of the data_table 
         integer(HSIZE_T), dimension(1) ::  attr_dims     ! size of the header (attribute)
         INTEGER(SIZE_T) :: attrlen  = 50                      ! Length of the attribute string
-        CHARACTER(LEN = 10) :: attr_name                ! Attribute name ('headers')
         
-
-        integer :: i, j  ! all the iterators         
 
         dims = [me%n_rows, me%n_cols]
 
@@ -652,13 +650,11 @@ module TABLE
         integer(HID_T) :: dataset_id        ! ID of the dataset object within the HDF5 object 
         integer(HID_T) :: dataspace_id      ! ID of the dataspace (space needed for the dataset)
         integer(HID_T) :: attribute_id      ! ID of the dataset attribute 
-        integer(HID_T) :: attr_dataspace_id ! ID of the attribute dataspace (space needed for the attribute)
         integer(HID_T) :: atype_id          ! ID of the attribute data type, is copied to customize character length
         integer(kind=4) :: error             ! Error code
         
         integer(HID_T) , dimension(2) :: matrix_dims 
         integer(HID_T) , dimension(2) :: matrix_max_dims 
-        integer(HID_T) , dimension(1) :: header_dims
         INTEGER(SIZE_T) :: attrlen  = 50                      ! Length of the attribute string
 
 
@@ -698,8 +694,9 @@ module TABLE
         allocate(table%table(matrix_dims(1),matrix_dims(2)))
         allocate(table%header(matrix_dims(2)))
 
-        table%n_rows = matrix_dims(1)
-        table%n_cols = matrix_dims(2)
+        ! Do the conversion between integer(4) and integer(8)
+        table%n_rows = int(matrix_dims(1),kind=8)
+        table%n_cols = int(matrix_dims(2),kind=8)
         
         ! read the data in the dataset 
         call h5dread_f(dataset_id,&
