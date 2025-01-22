@@ -695,8 +695,8 @@ module TABLE
         allocate(table%header(matrix_dims(2)))
 
         ! Do the conversion between integer(4) and integer(8)
-        table%n_rows = int(matrix_dims(1),kind=8)
-        table%n_cols = int(matrix_dims(2),kind=8)
+        table%n_rows = int(matrix_dims(1))
+        table%n_cols = int(matrix_dims(2))
         
         ! read the data in the dataset 
         call h5dread_f(dataset_id,&
