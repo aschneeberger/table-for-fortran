@@ -694,7 +694,6 @@ module TABLE
         allocate(table%table(matrix_dims(1),matrix_dims(2)))
         allocate(table%header(matrix_dims(2)))
 
-        ! Do the conversion between integer(4) and integer(8)
         table%n_rows = int(matrix_dims(1))
         table%n_cols = int(matrix_dims(2))
         
