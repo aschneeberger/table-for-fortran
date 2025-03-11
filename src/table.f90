@@ -278,6 +278,15 @@ module TABLE
         
         i=1                         ! Initialise the interator 
         itoken= scan(str,token)     ! Initialise with the index of the first token  
+
+        ! Check if the token existe, if not it means that there is only one elment in the string
+        ! therefore we return the string and stop there 
+        if (itoken == 0) then 
+            allocate(split(1))
+            split(1) = str
+            return 
+        end if  
+
         tmp(1) = str(:itoken-1)     ! transfer the first string in a temp array 
         
         ! Loop while there are remaining tokens
